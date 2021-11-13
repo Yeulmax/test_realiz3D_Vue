@@ -1,7 +1,7 @@
 <template lang="html">
   <div>
     <div class="ui fixed borderless huge menu">
-      <h1>Accueil</h1>
+      <h1>{{ navigation }}</h1>
     </div>
     <br><br><br><br><br><br>
     <sui-grid celled>
@@ -26,40 +26,41 @@
         </sui-grid-column>
         <sui-grid-column :width="5">
           <sui-label attached="top left">GROUPES</sui-label>
-
           <sui-list link>
             <a
                 style="color: #000000"
-                onMouseOver="this.style.color='#5c5c5c'"
+                onMouseOver="this.style.color='#008C59'"
                 onMouseOut="this.style.color='#000000'"
                 class="groupList"
                 is="sui-list-item"
                 v-for="group of groupsFilterByParentId(parentIdSelected)"
                 :key="group.id"
-                v-on:click.prevent="filterLotsByGroupId(group.id)">
-              {{ group.id }} : {{ group.name }}
+                v-on:click.prevent="filterLotsByGroupId(group.id); updateNavigation(group.name)">
+              <i class="caret right icon"></i>{{ group.id }} : {{ group.name }}
             </a>
           </sui-list>
         </sui-grid-column>
       </sui-grid-row>
 
       <sui-grid-row v-if="groupSelected">
-        <sui-grid-column >
+        <sui-grid-column>
           <sui-label attached="top left">LOTS</sui-label>
           <div v-if="!lotsExist" class="noLots">Aucun lots !</div>
           <sui-table celled padded v-else>
             <sui-table-header>
-              <sui-table-row>
+              <sui-table-row class="lotHeader">
                 <sui-table-header-cell collapsing>ID</sui-table-header-cell>
                 <sui-table-header-cell>Nom</sui-table-header-cell>
                 <sui-table-header-cell>Groupe ID</sui-table-header-cell>
+                <sui-table-header-cell collapsing>Actions</sui-table-header-cell>
               </sui-table-row>
             </sui-table-header>
             <sui-table-body>
-              <sui-table-row v-for="lot of lotsFiltered" :key="lot.id">
+              <sui-table-row v-for="lot of lotsFiltered" :key="lot.id" class="lotRow">
                 <sui-table-cell>{{ lot.id }}</sui-table-cell>
                 <sui-table-cell>{{ lot.name }}</sui-table-cell>
                 <sui-table-cell>{{ lot.group_id }}</sui-table-cell>
+                <sui-table-cell style="text-align: center"><a @click.prevent.stop="deleteLots(lot.id)">&#10060;</a></sui-table-cell>
               </sui-table-row>
             </sui-table-body>
           </sui-table>
@@ -68,8 +69,6 @@
         </sui-grid-column>
       </sui-grid-row>
     </sui-grid>
-
-
 
   </div>
 </template>
@@ -82,6 +81,7 @@ export default {
   data() {
     return {
       test: null,
+      navigation: 'Accueil',
       testSelected: null,
       groupSelected: null,
       groupsParentSelected: null,
@@ -121,7 +121,31 @@ export default {
     filterLotsByGroupId(id){
       this.groupSelected = id
       this.lotsFiltered  = this.lots.filter(x => x.group_id === id)
-      this.lotsExist     = this.lotsFiltered.length !== 0;
+      this.lotsExist     = this.lotsFiltered.length !== 0
+    },
+
+    async deleteLots(lotId){
+      try {
+        await axios.delete(`http://localhost/test_realiz3D/public/api/lots/` + lotId);
+      } catch (e) {
+        console.error(e);
+      }
+
+      await this.updateLots()
+      this.filterLotsByGroupId(this.groupSelected)
+    },
+
+    async updateLots(){
+      try {
+        const result = await axios.get(`http://localhost/test_realiz3D/public/api/lots`);
+        this.lots = result.data.reverse();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    updateNavigation(groupName){
+      this.navigation = groupName
     },
 
     setParentList(){
@@ -166,12 +190,16 @@ export default {
       console.error(e);
     }
 
+    await this.updateLots()
+    /*
     try {
       const result = await axios.get(`http://localhost/test_realiz3D/public/api/lots`);
       this.lots = result.data.reverse();
     } catch (e) {
       console.error(e);
     }
+
+     */
   }
 };
 </script>
@@ -205,13 +233,22 @@ body > .ui.container {
 }
 
 .ui.fixed.borderless.menu {
-  background-color: #4a008a;
+  background-color: #008C59;
   padding: 0.5em 1em;
 }
 
 .groupList{
   font-weight: bold;
   font-size: x-large;
+}
+
+.lotHeader{
+  font-weight: bold;
+  font-size: large;
+}
+
+.lotRow{
+  font-size: large;
 }
 
 </style>

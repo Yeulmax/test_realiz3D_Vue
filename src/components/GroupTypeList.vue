@@ -40,9 +40,10 @@
           </ul>
         </sui-grid-column>
       </sui-grid-row>
-      <sui-grid-row>
+      <sui-grid-row v-if="groupSelected">
         <sui-grid-column >
           <sui-label attached="top left">LOTS</sui-label>
+          <div v-if="!lotsExist">Pas de lots</div>
           <ul>
             <li v-for="lot of lotsFilterByGroupId(groupSelected)" :key="lot.id">
               {{ lot.id }} - {{ lot.name }}
@@ -110,11 +111,13 @@ export default {
   name: "GroupTypeList",
   data() {
     return {
-      groupSelected: 6,
+      test: null,
+      groupSelected: null,
       groupsParentSelected: null,
       groupTypes: [],
       groups: [],
       lots: [],
+      lotsExist: false,
       parentIdSelected: [],
       parentId: [
         { key: 'angular', text: 'Angular', value: 'angular' },
@@ -136,17 +139,18 @@ export default {
     };
   },
   computed: {
+    parentIdList(){
+      return true
+    }
   },
   methods: {
     groupsFilterByParentId(id){
       return this.groups.filter(x => x.parent_group_id === id);
     },
     lotsFilterByGroupId(id){
-      return this.lots.filter(x => x.group_id === id);
-    },
-    setGroupSelected(id){
-      console.log(id)
-      this.groupSelected = id
+      let lotsFiltered = this.lots.filter(x => x.group_id === id)
+      this.lotsExist = lotsFiltered.length !== 0;
+      return lotsFiltered;
     }
   },
   async created() {

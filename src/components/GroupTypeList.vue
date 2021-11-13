@@ -4,102 +4,72 @@
       <h1>Accueil</h1>
     </div>
     <br><br><br><br><br><br>
-    <sui-dropdown
-        placeholder="GroupType"
-        selection
-        :options="options"
-        v-model="current"
-    />
     <sui-grid celled>
       <sui-grid-row>
         <sui-grid-column :width="5">
-          <sui-label attached="top left">GROUPTYPE</sui-label>
+          <sui-label attached="top left">FILTRES</sui-label>
             <sui-dropdown
                 fluid
-                multiple
-                :options="parentId"
-                placeholder="Parent ID"
+                :options="parentList"
+                placeholder="Groupe Parent"
                 selection
                 v-model="parentIdSelected"
             /><br>
-            <sui-dropdown
-                fluid
-                multiple
-                :options="parentId"
-                placeholder="Type"
-                selection
-                v-model="parentIdSelected"
-            />
+          <sui-dropdown
+              fluid
+              :options="options"
+              placeholder="Type"
+              selection
+              v-model="testSelected"
+              v-on:submit.stop
+          />
         </sui-grid-column>
         <sui-grid-column :width="5">
-          <sui-label attached="top left">GROUPS</sui-label>
-          <ul>
-            <li v-for="group of groupsFilterByParentId(current)" :key="group.id" v-on:click="groupSelected = group.id">
-              {{ group.id }} - {{ group.name }}
-            </li>
-          </ul>
+          <sui-label attached="top left">GROUPES</sui-label>
+
+          <sui-list link>
+            <a
+                style="color: #000000"
+                onMouseOver="this.style.color='#5c5c5c'"
+                onMouseOut="this.style.color='#000000'"
+                class="groupList"
+                is="sui-list-item"
+                v-for="group of groupsFilterByParentId(parentIdSelected)"
+                :key="group.id"
+                v-on:click.prevent="filterLotsByGroupId(group.id)">
+              {{ group.id }} : {{ group.name }}
+            </a>
+          </sui-list>
         </sui-grid-column>
       </sui-grid-row>
+
       <sui-grid-row v-if="groupSelected">
         <sui-grid-column >
           <sui-label attached="top left">LOTS</sui-label>
-          <div v-if="!lotsExist">Pas de lots</div>
-          <ul>
-            <li v-for="lot of lotsFilterByGroupId(groupSelected)" :key="lot.id">
-              {{ lot.id }} - {{ lot.name }}
-            </li>
-          </ul>
+          <div v-if="!lotsExist" class="noLots">Aucun lots !</div>
+          <sui-table celled padded v-else>
+            <sui-table-header>
+              <sui-table-row>
+                <sui-table-header-cell collapsing>ID</sui-table-header-cell>
+                <sui-table-header-cell>Nom</sui-table-header-cell>
+                <sui-table-header-cell>Groupe ID</sui-table-header-cell>
+              </sui-table-row>
+            </sui-table-header>
+            <sui-table-body>
+              <sui-table-row v-for="lot of lotsFiltered" :key="lot.id">
+                <sui-table-cell>{{ lot.id }}</sui-table-cell>
+                <sui-table-cell>{{ lot.name }}</sui-table-cell>
+                <sui-table-cell>{{ lot.group_id }}</sui-table-cell>
+              </sui-table-row>
+            </sui-table-body>
+          </sui-table>
+
+
         </sui-grid-column>
       </sui-grid-row>
     </sui-grid>
 
-    <sui-table celled padded>
-      <sui-table-header>
-        <sui-table-row>
-          <sui-table-header-cell collapsing>ID</sui-table-header-cell>
-          <sui-table-header-cell>Nom</sui-table-header-cell>
-          <sui-table-header-cell>Group</sui-table-header-cell>
-        </sui-table-row>
-      </sui-table-header>
 
-      <sui-table-body>
-        <sui-table-row>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-        </sui-table-row>
-        <sui-table-row>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-        </sui-table-row>
-        <sui-table-row>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-          <sui-table-cell>Cell</sui-table-cell>
-        </sui-table-row>
-      </sui-table-body>
-
-
-      <sui-table-footer>
-        <sui-table-row>
-          <sui-table-header-cell colspan="3">
-            <sui-menu pagination>
-              <a is="sui-menu-item" icon>
-                <sui-icon name="left chevron" />
-              </a>
-              <a is="sui-menu-item">1</a>
-              <a is="sui-menu-item">2</a>
-              <a is="sui-menu-item">3</a>
-              <a is="sui-menu-item">4</a>
-              <a is="sui-menu-item" icon>
-                <sui-icon name="right chevron" />
-              </a>
-            </sui-menu>
-          </sui-table-header-cell>
-        </sui-table-row>
-      </sui-table-footer>
-    </sui-table>
 
   </div>
 </template>
@@ -112,18 +82,16 @@ export default {
   data() {
     return {
       test: null,
+      testSelected: null,
       groupSelected: null,
       groupsParentSelected: null,
       groupTypes: [],
       groups: [],
       lots: [],
+      lotsFiltered: [],
       lotsExist: false,
-      parentIdSelected: [],
-      parentId: [
-        { key: 'angular', text: 'Angular', value: 'angular' },
-        { key: 'css', text: 'CSS', value: 'css' },
-        { key: 'design', text: 'Graphic Design', value: 'design' },
-      ],
+      parentIdSelected: null,
+      parentList: [],
       current: null,
       counter: 0,
       options: [
@@ -139,18 +107,47 @@ export default {
     };
   },
   computed: {
-    parentIdList(){
-      return true
-    }
+
   },
   methods: {
+    testa(){
+      //e.stopPropagation()
+      console.log('Hey')
+    },
     groupsFilterByParentId(id){
       return this.groups.filter(x => x.parent_group_id === id);
     },
-    lotsFilterByGroupId(id){
-      let lotsFiltered = this.lots.filter(x => x.group_id === id)
-      this.lotsExist = lotsFiltered.length !== 0;
-      return lotsFiltered;
+
+    filterLotsByGroupId(id){
+      this.groupSelected = id
+      this.lotsFiltered  = this.lots.filter(x => x.group_id === id)
+      this.lotsExist     = this.lotsFiltered.length !== 0;
+    },
+
+    setParentList(){
+      //Récupération des ID des groupes parents
+      let parentIds = []
+      this.groups.forEach(element => parentIds.push(element['parent_group_id']))
+
+      //Suppression des doublons
+      parentIds = [...new Set(parentIds)]
+
+      //Création des attributs du menu de sélection
+      for(let parentId of parentIds){
+        if (parentId === null){
+          let newElement = {text: 'NULL', value: null }
+          this.parentList.push(newElement);
+        }else{
+          let nameOfParent = this.groups.find(x => x.id === parentId).name
+          let newElement = {text: parentId.toString() + ' - ' + nameOfParent, value: parentId }
+          this.parentList.push(newElement);
+        }
+      }
+    }
+  },
+  watch: {
+    parentIdSelected(){
+      this.groupSelected = null
     }
   },
   async created() {
@@ -164,6 +161,7 @@ export default {
     try {
       const result = await axios.get(`http://localhost/test_realiz3D/public/api/groups`);
       this.groups = result.data.reverse();
+      this.setParentList();
     } catch (e) {
       console.error(e);
     }
@@ -194,6 +192,13 @@ li{
   font-weight: bold;
   font-size: large;
 }
+.noLots{
+  font-weight: bold;
+  font-size: xx-large;
+  padding-bottom: 10px;
+  margin-left: 50px;
+  color: #db0000;
+}
 
 body > .ui.container {
   margin-top: 6em;
@@ -202,6 +207,11 @@ body > .ui.container {
 .ui.fixed.borderless.menu {
   background-color: #4a008a;
   padding: 0.5em 1em;
+}
+
+.groupList{
+  font-weight: bold;
+  font-size: x-large;
 }
 
 </style>

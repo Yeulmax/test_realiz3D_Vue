@@ -22,6 +22,7 @@
               :options="groupTypeList"
               placeholder="Type"
               selection
+              multiple
               v-model="groupTypeIdSelected"
           />
         </sui-grid-column>
@@ -36,7 +37,7 @@
                 is="sui-list-item"
                 v-for="group of groupsFiltered"
                 :key="group.id"
-                v-on:click.prevent="filterLotsByGroupId(group.id); updateNavigation(group.name)">
+                v-on:click.prevent="filterLotsByGroupId(group.id)">
               <i class="caret right icon"></i>{{ group.id }} : {{ group.name }}
             </a>
           </sui-list>
@@ -94,7 +95,7 @@ export default {
       lotsFiltered: [],
       lotsExist: false,
       parentIdSelected: [],
-      groupTypeIdSelected: null,
+      groupTypeIdSelected: [],
       parentList: [],
       groupTypeList: [],
       current: null,
@@ -134,6 +135,42 @@ export default {
       this.lotsExist     = this.lotsFiltered.length !== 0
     },
 
+    filterGroupSelectedByType(){
+      this.groupSelected = null
+
+      //Selection simple
+      /*
+            if (this.parentIdSelected.length === 0){
+              this.groupsFiltered = this.filterGroupsByTypeId(this.groupTypeIdSelected)
+            }else{
+              this.groupsFiltered = this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected)
+              if (this.groupTypeIdSelected === null) this.groupsFiltered = this.groupsFilteredCache
+            }
+       */
+
+      if (this.groupTypeIdSelected.length === 0){
+        this.groupsFiltered = this.groupsFilteredCache
+      }else{
+        if (this.parentIdSelected.length === 0){
+          this.groupsFiltered = []
+          for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
+            for (const obj of this.filterGroupsByTypeId(this.groupTypeIdSelected[i])) {
+              this.groupsFiltered.push(obj)
+            }
+          }
+        }else{
+          console.log('Hey')
+          let tempGroupsFiltered = []
+          for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
+            for (const obj of this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected[i])) {
+              tempGroupsFiltered.push(obj)
+            }
+          }
+          this.groupsFiltered = tempGroupsFiltered
+        }
+      }
+
+    },
     async deleteLots(lotId){
       try {
         await axios.delete(`http://localhost/test_realiz3D/public/api/lots/` + lotId);
@@ -180,15 +217,25 @@ export default {
     },
 
     setGroupTypeList(){
-      let newElement = {text: 'No filter', value: null }
-      this.groupTypeList.push(newElement)
       for (const groupType of this.groupTypes){
-        newElement = {text: groupType.id.toString() + ' - ' + groupType.label, value: groupType.id }
+        let newElement = {text: groupType.id.toString() + ' - ' + groupType.label, value: groupType.id }
         this.groupTypeList.push(newElement);
       }
     }
   },
   watch: {
+    groupTypeIdSelected(){
+      this.filterGroupSelectedByType()
+    },
+
+    groupSelected(){
+      if (this.groupSelected){
+        this.navigation = this.groups[this.groupSelected].name
+      }else{
+        this.navigation = 'Accueil'
+      }
+    },
+
     parentIdSelected(){
       this.groupSelected = null
       this.groupsFiltered = []
@@ -199,41 +246,10 @@ export default {
         }
       }
       this.groupsFilteredCache = this.groupsFiltered
+      this.filterGroupSelectedByType()
     },
 
-    groupTypeIdSelected(){
-      this.groupSelected = null
-      //this.groupsFiltered = []
 
-      if (this.parentIdSelected.length === 0){
-        this.groupsFiltered = this.filterGroupsByTypeId(this.groupTypeIdSelected)
-      }else{
-        this.groupsFiltered = this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected)
-        if (this.groupTypeIdSelected === null) this.groupsFiltered = this.groupsFilteredCache
-      }
-
-      //Amélioration future: filtre mutliple et croisé
-      // avec la sélection des groupe parents
-      /*
-      if (this.parentIdSelected.length === 0){
-        this.groupsFiltered = []
-        for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
-          for (const obj of this.filterGroupsByTypeId(this.groupTypeIdSelected[i])) {
-            this.groupsFiltered.push(obj)
-          }
-        }
-      }else{
-        console.log('Hey')
-        let tempGroupsFiltered = []
-        for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
-          for (const obj of this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected[i])) {
-            tempGroupsFiltered.push(obj)
-          }
-        }
-        this.groupsFiltered = tempGroupsFiltered
-      }
-       */
-    },
   },
   async created() {
     try {

@@ -138,16 +138,6 @@ export default {
     filterGroupSelectedByType(){
       this.groupSelected = null
 
-      //Selection simple
-      /*
-            if (this.parentIdSelected.length === 0){
-              this.groupsFiltered = this.filterGroupsByTypeId(this.groupTypeIdSelected)
-            }else{
-              this.groupsFiltered = this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected)
-              if (this.groupTypeIdSelected === null) this.groupsFiltered = this.groupsFilteredCache
-            }
-       */
-
       if (this.groupTypeIdSelected.length === 0){
         this.groupsFiltered = this.groupsFilteredCache
       }else{
@@ -159,7 +149,6 @@ export default {
             }
           }
         }else{
-          console.log('Hey')
           let tempGroupsFiltered = []
           for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
             for (const obj of this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected[i])) {
@@ -171,6 +160,7 @@ export default {
       }
 
     },
+
     async deleteLots(lotId){
       try {
         await axios.delete(`http://localhost/test_realiz3D/public/api/lots/` + lotId);
@@ -191,8 +181,27 @@ export default {
       }
     },
 
-    updateNavigation(groupName){
-      this.navigation = groupName
+    hasParent(groupId){
+      return !!this.groups.filter(x => x.id === groupId)[0].parent_group_id;
+    },
+
+    getParentName(groupId){
+      let parentId = this.groups.filter(x => x.id === groupId)[0].parent_group_id
+      return this.groups[parentId - 1].name
+    },
+
+    updateNavigation(){
+      let groupId = this.groupSelected
+
+      if (groupId){
+        if (this.hasParent(groupId)){
+          this.navigation = this.getParentName(groupId) + " -> " + this.groups[groupId - 1].name
+        }else{
+          this.navigation = this.groups[groupId - 1].name
+        }
+      }else{
+        this.navigation = 'Accueil'
+      }
     },
 
     setParentList(){
@@ -229,11 +238,7 @@ export default {
     },
 
     groupSelected(){
-      if (this.groupSelected){
-        this.navigation = this.groups[this.groupSelected].name
-      }else{
-        this.navigation = 'Accueil'
-      }
+      this.updateNavigation()
     },
 
     parentIdSelected(){

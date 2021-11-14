@@ -9,6 +9,7 @@
         <sui-grid-column :width="5">
           <sui-label attached="top left">FILTRES</sui-label>
             <sui-dropdown
+                class="test"
                 fluid
                 :options="parentList"
                 placeholder="Groupe Parent"
@@ -18,11 +19,10 @@
             /><br>
           <sui-dropdown
               fluid
-              :options="options"
+              :options="groupTypeList"
               placeholder="Type"
               selection
-              multiple
-              v-model="testSelected"
+              v-model="groupTypeIdSelected"
           />
         </sui-grid-column>
         <sui-grid-column :width="5">
@@ -50,7 +50,7 @@
           <sui-table celled padded v-else>
             <sui-table-header>
               <sui-table-row class="lotHeader">
-                <sui-table-header-cell collapsing>ID</sui-table-header-cell>
+                <sui-table-header-cell>ID</sui-table-header-cell>
                 <sui-table-header-cell>Nom</sui-table-header-cell>
                 <sui-table-header-cell>Groupe ID</sui-table-header-cell>
                 <sui-table-header-cell collapsing>Actions</sui-table-header-cell>
@@ -86,14 +86,17 @@ export default {
       testSelected: null,
       groupSelected: null,
       groupsFiltered: [],
+      groupsFilteredCache: [],
       groupsParentSelected: null,
       groupTypes: [],
       groups: [],
       lots: [],
       lotsFiltered: [],
       lotsExist: false,
-      parentIdSelected: null,
+      parentIdSelected: [],
+      groupTypeIdSelected: null,
       parentList: [],
+      groupTypeList: [],
       current: null,
       counter: 0,
       options: [
@@ -112,38 +115,17 @@ export default {
 
   },
   methods: {
-    updateGroupsFiltered(){
-
-
-      if (this.parentIdSelected){
-
-        for (let i = 0; i < this.parentIdSelected.length; i++){
-          console.log('yo', i)
-          console.log('yop', this.parentIdSelected[i])
-          //console.log('yopi', this.filterGroupsByParentId(this.parentIdSelected[i]))
-          this.groupsFiltered = this.filterGroupsByParentId(this.parentIdSelected[i])
-        }
-
-
-
-        //this.parentIdSelected.forEach(element => this.groupsFiltered.push(this.filterGroupsByParentId(element)))
-        //this.parentIdSelected.forEach(element => console.log(element))
-        //console.log(this.filterGroupsByParentId(this.parentIdSelected))
-/*
-        for (const id in this.parentIdSelected) {
-          console.log(this.parentIdSelected[id])
-
-          //this.groupsFiltered.push(this.filterGroupsByParentId(this.parentIdSelected[id]))
-        }
-
- */
-      }
-
-
-    },
 
     filterGroupsByParentId(id){
       return this.groups.filter(x => x.parent_group_id === id);
+    },
+
+    filterGroupsByTypeId(id){
+      return this.groups.filter(x => x.group_type_id === id);
+    },
+
+    filterSelectedGroupsByTypeId(id){
+      return this.groupsFilteredCache.filter(x => x.group_type_id === id);
     },
 
     filterLotsByGroupId(id){
@@ -195,6 +177,15 @@ export default {
           this.parentList.push(newElement);
         }
       }
+    },
+
+    setGroupTypeList(){
+      let newElement = {text: 'No filter', value: null }
+      this.groupTypeList.push(newElement)
+      for (const groupType of this.groupTypes){
+        newElement = {text: groupType.id.toString() + ' - ' + groupType.label, value: groupType.id }
+        this.groupTypeList.push(newElement);
+      }
     }
   },
   watch: {
@@ -207,6 +198,41 @@ export default {
           this.groupsFiltered.push(obj)
         }
       }
+      this.groupsFilteredCache = this.groupsFiltered
+    },
+
+    groupTypeIdSelected(){
+      this.groupSelected = null
+      //this.groupsFiltered = []
+
+      if (this.parentIdSelected.length === 0){
+        this.groupsFiltered = this.filterGroupsByTypeId(this.groupTypeIdSelected)
+      }else{
+        this.groupsFiltered = this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected)
+        if (this.groupTypeIdSelected === null) this.groupsFiltered = this.groupsFilteredCache
+      }
+
+      //Amélioration future: filtre mutliple et croisé
+      // avec la sélection des groupe parents
+      /*
+      if (this.parentIdSelected.length === 0){
+        this.groupsFiltered = []
+        for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
+          for (const obj of this.filterGroupsByTypeId(this.groupTypeIdSelected[i])) {
+            this.groupsFiltered.push(obj)
+          }
+        }
+      }else{
+        console.log('Hey')
+        let tempGroupsFiltered = []
+        for (let i = 0; i < this.groupTypeIdSelected.length; i++) {
+          for (const obj of this.filterSelectedGroupsByTypeId(this.groupTypeIdSelected[i])) {
+            tempGroupsFiltered.push(obj)
+          }
+        }
+        this.groupsFiltered = tempGroupsFiltered
+      }
+       */
     },
   },
   async created() {
@@ -220,12 +246,18 @@ export default {
     try {
       const result = await axios.get(`http://localhost/test_realiz3D/public/api/groups`);
       this.groups = result.data.reverse();
-      this.setParentList();
+
     } catch (e) {
       console.error(e);
     }
-
     await this.updateLots()
+
+    //Initialise dynamiquement le contenu des menus dropdown
+    this.setParentList();
+    this.setGroupTypeList();
+
+    //Initialise la sélection de groupe parent
+    this.parentIdSelected.push(null)
   }
 };
 </script>

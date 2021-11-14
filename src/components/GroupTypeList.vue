@@ -13,6 +13,7 @@
                 :options="parentList"
                 placeholder="Groupe Parent"
                 selection
+                multiple
                 v-model="parentIdSelected"
             /><br>
           <sui-dropdown
@@ -20,8 +21,8 @@
               :options="options"
               placeholder="Type"
               selection
+              multiple
               v-model="testSelected"
-              v-on:submit.stop
           />
         </sui-grid-column>
         <sui-grid-column :width="5">
@@ -33,7 +34,7 @@
                 onMouseOut="this.style.color='#000000'"
                 class="groupList"
                 is="sui-list-item"
-                v-for="group of groupsFilterByParentId(parentIdSelected)"
+                v-for="group of groupsFiltered"
                 :key="group.id"
                 v-on:click.prevent="filterLotsByGroupId(group.id); updateNavigation(group.name)">
               <i class="caret right icon"></i>{{ group.id }} : {{ group.name }}
@@ -84,6 +85,7 @@ export default {
       navigation: 'Accueil',
       testSelected: null,
       groupSelected: null,
+      groupsFiltered: [],
       groupsParentSelected: null,
       groupTypes: [],
       groups: [],
@@ -110,11 +112,37 @@ export default {
 
   },
   methods: {
-    testa(){
-      //e.stopPropagation()
-      console.log('Hey')
+    updateGroupsFiltered(){
+
+
+      if (this.parentIdSelected){
+
+        for (let i = 0; i < this.parentIdSelected.length; i++){
+          console.log('yo', i)
+          console.log('yop', this.parentIdSelected[i])
+          //console.log('yopi', this.filterGroupsByParentId(this.parentIdSelected[i]))
+          this.groupsFiltered = this.filterGroupsByParentId(this.parentIdSelected[i])
+        }
+
+
+
+        //this.parentIdSelected.forEach(element => this.groupsFiltered.push(this.filterGroupsByParentId(element)))
+        //this.parentIdSelected.forEach(element => console.log(element))
+        //console.log(this.filterGroupsByParentId(this.parentIdSelected))
+/*
+        for (const id in this.parentIdSelected) {
+          console.log(this.parentIdSelected[id])
+
+          //this.groupsFiltered.push(this.filterGroupsByParentId(this.parentIdSelected[id]))
+        }
+
+ */
+      }
+
+
     },
-    groupsFilterByParentId(id){
+
+    filterGroupsByParentId(id){
       return this.groups.filter(x => x.parent_group_id === id);
     },
 
@@ -172,7 +200,14 @@ export default {
   watch: {
     parentIdSelected(){
       this.groupSelected = null
-    }
+      this.groupsFiltered = []
+
+      for (let i = 0; i < this.parentIdSelected.length; i++) {
+        for (const obj of this.filterGroupsByParentId(this.parentIdSelected[i])) {
+          this.groupsFiltered.push(obj)
+        }
+      }
+    },
   },
   async created() {
     try {
@@ -191,15 +226,6 @@ export default {
     }
 
     await this.updateLots()
-    /*
-    try {
-      const result = await axios.get(`http://localhost/test_realiz3D/public/api/lots`);
-      this.lots = result.data.reverse();
-    } catch (e) {
-      console.error(e);
-    }
-
-     */
   }
 };
 </script>

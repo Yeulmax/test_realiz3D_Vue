@@ -3,7 +3,7 @@
     <div class="ui fixed borderless huge menu">
       <h1>{{ navigation }}</h1>
     </div>
-    <br><br><br><br><br><br>
+    <br>
     <sui-grid celled>
       <sui-grid-row>
         <sui-grid-column :width="5">
@@ -26,6 +26,7 @@
               v-model="groupTypeIdSelected"
           />
         </sui-grid-column>
+
         <sui-grid-column :width="5">
           <sui-label attached="top left">GROUPES</sui-label>
           <sui-list link>
@@ -66,12 +67,9 @@
               </sui-table-row>
             </sui-table-body>
           </sui-table>
-
-
         </sui-grid-column>
       </sui-grid-row>
     </sui-grid>
-
   </div>
 </template>
 
@@ -82,59 +80,47 @@ export default {
   name: "GroupTypeList",
   data() {
     return {
-      test: null,
       navigation: 'Accueil',
-      testSelected: null,
-      groupSelected: null,
-      groupsFiltered: [],
-      groupsFilteredCache: [],
-      groupsParentSelected: null,
       groupTypes: [],
       groups: [],
       lots: [],
+      groupSelected: null,
+      groupsFiltered: [],
+      groupsFilteredCache: [],
       lotsFiltered: [],
       lotsExist: false,
       parentIdSelected: [],
-      groupTypeIdSelected: [],
       parentList: [],
-      groupTypeList: [],
-      current: null,
-      counter: 0,
-      options: [
-        {
-          text: 'NULL',
-          value: null,
-        },
-        {
-          text: '1',
-          value: 1,
-        },
-      ],
+      groupTypeIdSelected: [],
+      groupTypeList: []
     };
-  },
-  computed: {
-
   },
   methods: {
 
+    //Retourne les groupes correspondant à un ID parent
     filterGroupsByParentId(id){
       return this.groups.filter(x => x.parent_group_id === id);
     },
 
+    //Retourne les groupes correspondant à un ID de type
     filterGroupsByTypeId(id){
       return this.groups.filter(x => x.group_type_id === id);
     },
 
+    //Filtre les groupes retenu par le filtre parent (présélectionné)
     filterSelectedGroupsByTypeId(id){
       return this.groupsFilteredCache.filter(x => x.group_type_id === id);
     },
 
+    //Filtre les lots correspondant à un ID de groupe
     filterLotsByGroupId(id){
       this.groupSelected = id
       this.lotsFiltered  = this.lots.filter(x => x.group_id === id)
       this.lotsExist     = this.lotsFiltered.length !== 0
     },
 
+    //Applique les filtres selectionné par le menu dropdown
+    // Croise les données si nécessaire
     filterGroupSelectedByType(){
       this.groupSelected = null
 
@@ -161,6 +147,7 @@ export default {
 
     },
 
+    //Supprime un lot
     async deleteLots(lotId){
       try {
         await axios.delete(`http://localhost/test_realiz3D/public/api/lots/` + lotId);
@@ -172,6 +159,7 @@ export default {
       this.filterLotsByGroupId(this.groupSelected)
     },
 
+    //Met à jour la liste des lots
     async updateLots(){
       try {
         const result = await axios.get(`http://localhost/test_realiz3D/public/api/lots`);
@@ -181,15 +169,18 @@ export default {
       }
     },
 
+    //Vérifie sur un groupe possède un parent
     hasParent(groupId){
       return !!this.groups.filter(x => x.id === groupId)[0].parent_group_id;
     },
 
+    //Renvoie le nom du groupe parent
     getParentName(groupId){
       let parentId = this.groups.filter(x => x.id === groupId)[0].parent_group_id
       return this.groups[parentId - 1].name
     },
 
+    //Met à jour l'indicateur de navigation
     updateNavigation(){
       let groupId = this.groupSelected
 
@@ -204,6 +195,8 @@ export default {
       }
     },
 
+    //Crée la liste des groupes parents
+    // en fonction du contenu de la BDD (Dynamique)
     setParentList(){
       //Récupération des ID des groupes parents
       let parentIds = []
@@ -225,6 +218,8 @@ export default {
       }
     },
 
+    //Crée la liste des groupes en fonction du
+    // contenu de la BDD (Dynamique)
     setGroupTypeList(){
       for (const groupType of this.groupTypes){
         let newElement = {text: groupType.id.toString() + ' - ' + groupType.label, value: groupType.id }
@@ -254,7 +249,6 @@ export default {
       this.filterGroupSelectedByType()
     },
 
-
   },
   async created() {
     try {
@@ -273,7 +267,7 @@ export default {
     }
     await this.updateLots()
 
-    //Initialise dynamiquement le contenu des menus dropdown
+    //Initialise le contenu des menus dropdown
     this.setParentList();
     this.setGroupTypeList();
 
@@ -330,4 +324,7 @@ body > .ui.container {
   font-size: large;
 }
 
+.ui.celled.grid{
+  margin-top: 100px;
+}
 </style>

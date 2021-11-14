@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-      <group-type-list />
+      <data-visualisation />
   </div>
 </template>
 
 <script>
-import GroupTypeList from './components/GroupTypeList.vue'
+import DataVisualisation from './components/DataVisualisation.vue'
 
 export default {
   name: 'App',
   components: {
-    GroupTypeList
+    DataVisualisation
   }
 }
 

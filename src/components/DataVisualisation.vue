@@ -150,7 +150,7 @@ export default {
     //Supprime un lot
     async deleteLots(lotId){
       try {
-        await axios.delete(`http://localhost/test_realiz3D/public/api/lots/` + lotId);
+        await axios.delete(`http://localhost/test_realiz3D_laravel/public/api/lots/` + lotId);
       } catch (e) {
         console.error(e);
       }
@@ -162,7 +162,7 @@ export default {
     //Met à jour la liste des lots
     async updateLots(){
       try {
-        const result = await axios.get(`http://localhost/test_realiz3D/public/api/lots`);
+        const result = await axios.get(`http://localhost/test_realiz3D_laravel/public/api/lots`);
         this.lots = result.data.reverse();
       } catch (e) {
         console.error(e);
@@ -252,14 +252,14 @@ export default {
   },
   async created() {
     try {
-      let result = await axios.get(`http://localhost/test_realiz3D/public/api/groupTypes`);
+      let result = await axios.get(`http://localhost/test_realiz3D_laravel/public/api/groupTypes`);
       this.groupTypes = result.data.reverse();
     } catch (e) {
       console.error(e);
     }
 
     try {
-      const result = await axios.get(`http://localhost/test_realiz3D/public/api/groups`);
+      const result = await axios.get(`http://localhost/test_realiz3D_laravel/public/api/groups`);
       this.groups = result.data.reverse();
 
     } catch (e) {
